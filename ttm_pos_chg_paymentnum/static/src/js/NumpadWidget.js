@@ -7,12 +7,12 @@ import { patch } from "@web/core/utils/patch";
 // const CUSTOM_INPUT_KEYS = new Set(["+1000", "+2000", "+5000"]);
 
 patch(PaymentScreen.prototype, {
-  get _getNumberBufferConfig() {
+    get _getNumberBufferConfig() {
       const config = super._getNumberBufferConfig;
-      config['triggerAtInput'] = () => this.updateSelectedPaymentlineNew();
+      config['triggerAtInput'] = (...args) => this.updateSelectedPaymentlineNew(...args);
       return config;
   },
-  updateSelectedPaymentlineNew(amount = false) {
+  updateSelectedPaymentlineNew({ buffer, key }, amount = false) {
     
     if (this.paymentLines.every((line) => line.paid)) {
         this.currentOrder.add_paymentline(this.payment_methods_from_config[0]);
@@ -27,18 +27,17 @@ patch(PaymentScreen.prototype, {
             amount = 0;
         } else {
             amount = this.numberBuffer.getFloat();
-            console.debug('Debug in here');
+        }
+
+    }
+    console.debug('Debug in here');
+    if(['+10','+20','+50'].includes(key)){
+        let iKey = parseInt(key,10)
+        if(this.currentOrder.get_due() == 0){
+            amount = iKey * 1000;
+        } else  {
             let current = this.selectedPaymentLine.amount;
-            let key = 0;
-            if(this.currentOrder.get_due() == 0 && [10,20,50].includes(amount)){
-                amount = amount * 1000;
-            } else if (this.currentOrder.get_due() != 0)  {
-                key = amount - current;
-                if([10,20,50].includes(key)){
-                    amount = current + key * 1000;
-                }
-            }
-            
+            amount = current + iKey * 1000;
         }
     }
     // disable changing amount on paymentlines with running or done payments on a payment terminal
